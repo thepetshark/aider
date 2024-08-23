@@ -1,9 +1,9 @@
-version: '3'
+version: '3.8'
 services:
-  app:
+  devcontainer:
     build: 
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
     volumes:
       - ..:/workspace:cached
       - faiss-data:/faiss-data

@@ -225,4 +225,6 @@ faiss-cpu
 neo4j
 psycopg2-binary
 sqlalchemy
+python-dotenv
+aider-chat
 # Add other Python dependencies your project needs
