@@ -218,3 +218,11 @@ yarl==1.9.4
     # via aiohttp
 zipp==3.20.0
     # via importlib-metadata
+
+
+
+faiss-cpu
+neo4j
+psycopg2-binary
+sqlalchemy
+# Add other Python dependencies your project needs
