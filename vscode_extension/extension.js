@@ -8,9 +8,9 @@ let aiderSession = null;
 function activate(context) {
     console.log('Aider VS Code extension is now active!');
 
-    let showNotesDisposable = vscode.commands.registerCommand('aider-vscode.showNotes', showNotes);
-    let startSessionDisposable = vscode.commands.registerCommand('aider-vscode.startAiderSession', startAiderSession);
-    let endSessionDisposable = vscode.commands.registerCommand('aider-vscode.endAiderSession', endAiderSession);
+    let showNotesDisposable = vscode.commands.registerCommand('aider-notes-vscode.showNotes', showNotes);
+    let startSessionDisposable = vscode.commands.registerCommand('aider-notes-vscode.startAiderSession', startAiderSession);
+    let endSessionDisposable = vscode.commands.registerCommand('aider-notes-vscode.endAiderSession', endAiderSession);
 
     context.subscriptions.push(showNotesDisposable);
     context.subscriptions.push(startSessionDisposable);

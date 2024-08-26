@@ -1,5 +1,5 @@
 {
-    "name": "aider-vscode",
+    "name": "aider-notes-vscode",
     "displayName": "Aider AI Assistant",
     "description": "VS Code extension for Aider AI pair programming",
     "version": "0.1.0",
@@ -10,23 +10,23 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:aider-vscode.showNotes",
-        "onCommand:aider-vscode.startAiderSession",
-        "onCommand:aider-vscode.endAiderSession"
+        "onCommand:aider-notes-vscode.showNotes",
+        "onCommand:aider-notes-vscode.startAiderSession",
+        "onCommand:aider-notes-vscode.endAiderSession"
     ],
     "main": "./extension.js",
     "contributes": {
         "commands": [
             {
-                "command": "aider-vscode.showNotes",
+                "command": "aider-notes-vscode.showNotes",
                 "title": "Aider: Show AI Notes"
             },
             {
-                "command": "aider-vscode.startAiderSession",
+                "command": "aider-notes-vscode.startAiderSession",
                 "title": "Aider: Start AI Pair Programming Session"
             },
             {
-                "command": "aider-vscode.endAiderSession",
+                "command": "aider-notes-vscode.endAiderSession",
                 "title": "Aider: End AI Pair Programming Session"
             }
         ],
