@@ -1,0 +1,34 @@
+{
+    "name": "aider-ai-notes",
+    "displayName": "Aider AI Notes",
+    "description": "View AI-generated notes for Aider",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:aider.viewAINotes"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "aider.viewAINotes",
+                "title": "View Aider AI Notes"
+            }
+        ]
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "pretest": "npm run lint",
+        "test": "node ./test/runTest.js"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.60.0",
+        "eslint": "^7.32.0",
+        "@vscode/test-electron": "^2.3.0"
+    }
+}
