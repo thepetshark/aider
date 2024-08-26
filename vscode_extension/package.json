@@ -45,7 +45,7 @@
                     "description": "AI model to use for pair programming"
                 }
             }
-        }
+        ]
     },
     "scripts": {
         "lint": "eslint .",
