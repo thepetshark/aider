@@ -1,6 +1,7 @@
 import base64
 import os
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -12,7 +13,6 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from prompt_toolkit.styles import Style
-from prompt_toolkit.validation import Validator
 from pygments.lexers import MarkdownLexer, guess_lexer_for_filename
 from pygments.token import Token
 from pygments.util import ClassNotFound
@@ -22,6 +22,16 @@ from rich.text import Text
 
 from .dump import dump  # noqa: F401
 from .utils import is_image_file
+
+
+@dataclass
+class ConfirmGroup:
+    preference: str = None
+    show_group: bool = True
+
+    def __init__(self, items=None):
+        if items is not None:
+            self.show_group = len(items) > 1
 
 
 class AutoCompleter(Completer):
@@ -142,7 +152,7 @@ class InputOutput:
     def __init__(
         self,
         pretty=True,
-        yes=False,
+        yes=None,
         input_history_file=None,
         chat_history_file=None,
         input=None,
@@ -368,15 +378,23 @@ class InputOutput:
         hist = "\n" + content.strip() + "\n\n"
         self.append_chat_history(hist)
 
-    def confirm_ask(self, question, default="y", subject=None, explicit_yes_required=False):
+    def confirm_ask(
+        self, question, default="y", subject=None, explicit_yes_required=False, group=None
+    ):
         self.num_user_asks += 1
 
-        if default == "y":
-            question += " [Y/n] "
-        elif default == "n":
-            question += " [y/N] "
-        else:
-            question += " [y/n] "
+        if group and not group.show_group:
+            group = None
+
+        valid_responses = ["yes", "no"]
+        options = " (Y)es/(N)o"
+        if group:
+            if not explicit_yes_required:
+                options += "/(A)ll"
+                valid_responses.append("all")
+            options += "/(S)kip all"
+            valid_responses.append("skip")
+        question += options + " [Yes]: "
 
         if subject:
             self.tool_output()
@@ -394,32 +412,52 @@ class InputOutput:
         else:
             style = dict()
 
-        def is_yesno(text):
-            return "yes".startswith(text.lower()) or "no".startswith(text.lower())
-
-        validator = Validator.from_callable(
-            is_yesno,
-            error_message="Answer yes or no.",
-            move_cursor_to_end=True,
-        )
+        def is_valid_response(text):
+            if not text:
+                return True
+            return text.lower() in valid_responses
 
         if self.yes is True:
             res = "n" if explicit_yes_required else "y"
         elif self.yes is False:
             res = "n"
+        elif group and group.preference:
+            res = group.preference
+            self.user_input(f"{question}{res}", log_only=False)
         else:
-            res = prompt(
-                question,
-                style=Style.from_dict(style),
-                validator=validator,
-            )
-            if not res and default:
-                res = default
+            while True:
+                res = prompt(
+                    question,
+                    style=Style.from_dict(style),
+                )
+                if not res:
+                    res = "y"  # Default to Yes if no input
+                    break
+                res = res.lower()
+                good = any(valid_response.startswith(res) for valid_response in valid_responses)
+                if good:
+                    break
 
-        res = res.lower().strip()
-        is_yes = res in ("y", "yes")
+                error_message = f"Please answer with one of: {', '.join(valid_responses)}"
+                self.tool_error(error_message)
 
-        hist = f"{question.strip()} {'y' if is_yes else 'n'}"
+        res = res.lower()[0]
+
+        if explicit_yes_required:
+            is_yes = res == "y"
+        else:
+            is_yes = res in ("y", "a")
+
+        is_all = res == "a" and group is not None and not explicit_yes_required
+        is_skip = res == "s" and group is not None
+
+        if group:
+            if is_all and not explicit_yes_required:
+                group.preference = "all"
+            elif is_skip:
+                group.preference = "skip"
+
+        hist = f"{question.strip()} {res}"
         self.append_chat_history(hist, linebreak=True, blockquote=True)
 
         return is_yes

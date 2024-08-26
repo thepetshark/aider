@@ -1,10 +1,10 @@
 import difflib
-import importlib
 import json
 import math
 import os
 import platform
 import sys
+import time
 from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Optional
@@ -275,7 +275,7 @@ MODEL_SETTINGS = [
             "anthropic-beta": ANTHROPIC_BETA_HEADER,
         },
         cache_control=True,
-        reminder=None,
+        reminder="user",
     ),
     ModelSettings(
         "anthropic/claude-3-5-sonnet-20240620",
@@ -288,7 +288,7 @@ MODEL_SETTINGS = [
             "anthropic-beta": ANTHROPIC_BETA_HEADER,
         },
         cache_control=True,
-        reminder=None,
+        reminder="user",
     ),
     ModelSettings(
         "anthropic/claude-3-haiku-20240307",
@@ -323,7 +323,7 @@ MODEL_SETTINGS = [
             "HTTP-Referer": AIDER_SITE_URL,
             "X-Title": AIDER_APP_NAME,
         },
-        reminder=None,
+        reminder="user",
     ),
     # Vertex AI Claude models
     # Does not yet support 8k token
@@ -334,7 +334,7 @@ MODEL_SETTINGS = [
         use_repo_map=True,
         examples_as_sys_msg=True,
         accepts_images=True,
-        reminder=None,
+        reminder="user",
     ),
     ModelSettings(
         "vertex_ai/claude-3-opus@20240229",
@@ -424,13 +424,52 @@ MODEL_SETTINGS = [
 ]
 
 
-class Model:
-    def __init__(self, model, weak_model=None):
-        # Set defaults from ModelSettings
-        default_settings = ModelSettings(name="")
-        for field in fields(ModelSettings):
-            setattr(self, field.name, getattr(default_settings, field.name))
+model_info_url = (
+    "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json"
+)
 
+
+def get_model_info(model):
+    if not litellm._lazy_module:
+        cache_dir = Path.home() / ".aider" / "caches"
+        cache_file = cache_dir / "model_prices_and_context_window.json"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+        current_time = time.time()
+        cache_age = (
+            current_time - cache_file.stat().st_mtime if cache_file.exists() else float("inf")
+        )
+
+        if cache_age < 60 * 60 * 24:
+            try:
+                content = json.loads(cache_file.read_text())
+                info = content.get(model, dict())
+                return info
+            except Exception as ex:
+                print(str(ex))
+
+        import requests
+
+        try:
+            response = requests.get(model_info_url, timeout=5)
+            if response.status_code == 200:
+                content = response.json()
+                cache_file.write_text(json.dumps(content, indent=4))
+                info = content.get(model, dict())
+                return info
+        except Exception as ex:
+            print(str(ex))
+
+    # If all else fails, do it the slow way...
+    try:
+        info = litellm.get_model_info(model)
+        return info
+    except Exception:
+        return dict()
+
+
+class Model(ModelSettings):
+    def __init__(self, model, weak_model=None):
         self.name = model
         self.max_chat_history_tokens = 1024
         self.weak_model = None
@@ -455,23 +494,7 @@ class Model:
             self.get_weak_model(weak_model)
 
     def get_model_info(self, model):
-        if not litellm._lazy_module:
-            # Try and do this quickly, without triggering the litellm import
-            spec = importlib.util.find_spec("litellm")
-            if spec:
-                origin = Path(spec.origin)
-                fname = origin.parent / "model_prices_and_context_window_backup.json"
-                if fname.exists():
-                    data = json.loads(fname.read_text())
-                    info = data.get(model)
-                    if info:
-                        return info
-
-        # Do it the slow way...
-        try:
-            return litellm.get_model_info(model)
-        except Exception:
-            return dict()
+        return get_model_info(model)
 
     def configure_model_settings(self, model):
         for ms in MODEL_SETTINGS:

@@ -227,7 +227,7 @@ class Commands:
         self.coder.repo.commit(message=commit_message)
 
     def cmd_lint(self, args="", fnames=None):
-        "Lint and fix provided files or in-chat files if none provided"
+        "Lint and fix in-chat files or all dirty files if none in chat"
 
         if not self.coder.repo:
             self.io.tool_error("No git repository found.")
@@ -263,7 +263,7 @@ class Commands:
                 continue
 
             # Commit everything before we start fixing lint errors
-            if self.coder.repo.is_dirty():
+            if self.coder.repo.is_dirty() and self.coder.dirty_commits:
                 self.cmd_commit("")
 
             if not lint_coder:
@@ -278,7 +278,7 @@ class Commands:
             lint_coder.run(errors)
             lint_coder.abs_fnames = set()
 
-        if lint_coder and self.coder.repo.is_dirty():
+        if lint_coder and self.coder.repo.is_dirty() and self.coder.auto_commits:
             self.cmd_commit("")
 
     def cmd_clear(self, args):
@@ -582,15 +582,23 @@ class Commands:
                 all_matched_files.update(matched_files)
                 continue
 
+            if "*" in str(fname) or "?" in str(fname):
+                self.io.tool_error(
+                    f"No match, and cannot create file with wildcard characters: {fname}"
+                )
+                continue
+
+            if fname.exists() and fname.is_dir() and self.coder.repo:
+                self.io.tool_error(f"Directory {fname} is not in git.")
+                self.io.tool_error(f"You can add to git with: /git add {fname}")
+                continue
+
             if self.io.confirm_ask(f"No files matched '{word}'. Do you want to create {fname}?"):
-                if "*" in str(fname) or "?" in str(fname):
-                    self.io.tool_error(f"Cannot create file with wildcard characters: {fname}")
-                else:
-                    try:
-                        fname.touch()
-                        all_matched_files.add(str(fname))
-                    except OSError as e:
-                        self.io.tool_error(f"Error creating file {fname}: {e}")
+                try:
+                    fname.touch()
+                    all_matched_files.add(str(fname))
+                except OSError as e:
+                    self.io.tool_error(f"Error creating file {fname}: {e}")
 
         for matched_file in all_matched_files:
             abs_file_path = self.coder.abs_root_path(matched_file)
