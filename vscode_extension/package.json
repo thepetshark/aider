@@ -1,8 +1,8 @@
 {
-    "name": "aider-ai-notes",
-    "displayName": "Aider AI Notes",
-    "description": "View AI-generated notes for Aider",
-    "version": "0.0.1",
+    "name": "aider-vscode",
+    "displayName": "Aider AI Assistant",
+    "description": "VS Code extension for Aider AI pair programming",
+    "version": "0.1.0",
     "engines": {
         "vscode": "^1.60.0"
     },
@@ -10,14 +10,40 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:aider.viewAINotes"
+        "onCommand:aider-vscode.showNotes",
+        "onCommand:aider-vscode.startAiderSession",
+        "onCommand:aider-vscode.endAiderSession"
     ],
     "main": "./extension.js",
     "contributes": {
         "commands": [
             {
-                "command": "aider.viewAINotes",
-                "title": "View Aider AI Notes"
+                "command": "aider-vscode.showNotes",
+                "title": "Aider: Show AI Notes"
+            },
+            {
+                "command": "aider-vscode.startAiderSession",
+                "title": "Aider: Start AI Pair Programming Session"
+            },
+            {
+                "command": "aider-vscode.endAiderSession",
+                "title": "Aider: End AI Pair Programming Session"
+            }
+        ],
+        "configuration": {
+            "title": "Aider",
+            "properties": {
+                "aider.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "API key for the AI service"
+                },
+                "aider.model": {
+                    "type": "string",
+                    "default": "gpt-4",
+                    "enum": ["gpt-4", "gpt-3.5-turbo", "claude-2"],
+                    "description": "AI model to use for pair programming"
+                }
             }
         ]
     },
@@ -28,7 +54,16 @@
     },
     "devDependencies": {
         "@types/vscode": "^1.60.0",
-        "eslint": "^7.32.0",
-        "@vscode/test-electron": "^2.3.0"
+        "@types/glob": "^7.1.3",
+        "@types/mocha": "^8.2.2",
+        "@types/node": "14.x",
+        "eslint": "^7.27.0",
+        "glob": "^7.1.7",
+        "mocha": "^8.4.0",
+        "typescript": "^4.3.2",
+        "@vscode/test-electron": "^1.6.1"
+    },
+    "dependencies": {
+        "axios": "^0.21.1"
     }
 }
