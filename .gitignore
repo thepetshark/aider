@@ -10,3 +10,8 @@ Gemfile.lock
 _site
 .jekyll-cache/
 .jekyll-metadata
+
+# VS Code extension specific ignores
+vscode_extension/node_modules/
+vscode_extension/out/
+vscode_extension/*.vsix
